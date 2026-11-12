@@ -1,6 +1,10 @@
+
 import { useState } from "react";
 import Dashboard from "./components/Dashboard";
 import "./App.css";
+
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function App() {
   const [page, setPage] = useState("home");
@@ -18,16 +22,16 @@ function App() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/register", {
+      const response = await fetch(`${API_URL}/api/register`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name,
           email,
-          password
-        })
+          password,
+        }),
       });
 
       const data = await response.json();
@@ -40,9 +44,8 @@ function App() {
       setPage("login");
       setPassword("");
       setName("");
-
     } catch (error) {
-      setMessage(error.message);
+      setMessage(error.message || "Unable to connect to the server.");
     } finally {
       setLoading(false);
     }
@@ -55,15 +58,15 @@ function App() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/login", {
+      const response = await fetch(`${API_URL}/api/login`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email,
-          password
-        })
+          password,
+        }),
       });
 
       const data = await response.json();
@@ -72,16 +75,15 @@ function App() {
         throw new Error(data.message || "Login failed");
       }
 
-      // Save JWT token
+      // SAVE JWT TOKEN
       localStorage.setItem("token", data.token);
 
       setLoggedInUser(data.user);
       setMessage("Login successful!");
       setPage("dashboard");
       setPassword("");
-
     } catch (error) {
-      setMessage(error.message);
+      setMessage(error.message || "Unable to connect to the server.");
     } finally {
       setLoading(false);
     }
@@ -107,9 +109,26 @@ function App() {
         </h2>
 
         <div className="nav-links">
-          <a href="#" onClick={() => setPage("home")}>Home</a>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              setPage("home");
+            }}
+          >
+            Home
+          </a>
           <a href="#about">About</a>
-          <a href="#ideas">Explore Ideas</a>
+          <a
+            href="#ideas"
+            onClick={(e) => {
+              if (page !== "dashboard") {
+                e.preventDefault();
+              }
+            }}
+          >
+            Explore Ideas
+          </a>
         </div>
 
         <div className="nav-buttons">
@@ -179,9 +198,18 @@ function App() {
               </div>
 
               <div className="stats">
-                <div><h3>500+</h3><p>Innovators</p></div>
-                <div><h3>120+</h3><p>Startup Ideas</p></div>
-                <div><h3>80+</h3><p>Collaborations</p></div>
+                <div>
+                  <h3>500+</h3>
+                  <p>Innovators</p>
+                </div>
+                <div>
+                  <h3>120+</h3>
+                  <p>Startup Ideas</p>
+                </div>
+                <div>
+                  <h3>80+</h3>
+                  <p>Collaborations</p>
+                </div>
               </div>
             </div>
 
@@ -212,12 +240,16 @@ function App() {
 
               <div className="feature-card">
                 <h3>🤝 Find Teammates</h3>
-                <p>Connect with students who have the skills your startup needs.</p>
+                <p>
+                  Connect with students who have the skills your startup needs.
+                </p>
               </div>
 
               <div className="feature-card">
                 <h3>🚀 Build Together</h3>
-                <p>Turn your ideas into real projects through collaboration.</p>
+                <p>
+                  Turn your ideas into real projects through collaboration.
+                </p>
               </div>
             </div>
           </section>
@@ -272,10 +304,12 @@ function App() {
 
             <p className="auth-switch">
               Already have an account?{" "}
-              <span onClick={() => {
-                setMessage("");
-                setPage("login");
-              }}>
+              <span
+                onClick={() => {
+                  setMessage("");
+                  setPage("login");
+                }}
+              >
                 Login
               </span>
             </p>
@@ -321,10 +355,12 @@ function App() {
 
             <p className="auth-switch">
               Don't have an account?{" "}
-              <span onClick={() => {
-                setMessage("");
-                setPage("register");
-              }}>
+              <span
+                onClick={() => {
+                  setMessage("");
+                  setPage("register");
+                }}
+              >
                 Register
               </span>
             </p>
@@ -332,10 +368,10 @@ function App() {
         </div>
       )}
 
-{/* DASHBOARD */}
-{page === "dashboard" && (
-    <Dashboard user={loggedInUser} />
-)}
+      {/* DASHBOARD */}
+      {page === "dashboard" && (
+        <Dashboard user={loggedInUser} />
+      )}
 
     </div>
   );

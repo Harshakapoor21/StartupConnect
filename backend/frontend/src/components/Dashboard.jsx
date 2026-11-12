@@ -1,8 +1,11 @@
+
 import { useEffect, useState } from "react";
 import Milestones from "./Milestones";
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 function Dashboard({ user }) {
-  // STATES
   const [ideas, setIdeas] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +29,7 @@ function Dashboard({ user }) {
   // FETCH STARTUP IDEAS
   const fetchIdeas = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/ideas");
+      const response = await fetch(`${API_URL}/api/ideas`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -45,11 +48,11 @@ function Dashboard({ user }) {
   // FETCH REGISTERED USERS
   const fetchUsers = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/users");
+      const response = await fetch(`${API_URL}/api/users`);
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error("Unable to load users");
+        throw new Error(data.message || "Unable to load users");
       }
 
       setUsers(data);
@@ -74,18 +77,24 @@ function Dashboard({ user }) {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/ideas", {
+      const response = await fetch(`${API_URL}/api/ideas`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           title,
           description,
-          requiredSkills: requiredSkills.split(",").map(s => s.trim()).filter(Boolean),
-          teamRoles: teamRoles.split(",").map(s => s.trim()).filter(Boolean)
-        })
+          requiredSkills: requiredSkills
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          teamRoles: teamRoles
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        }),
       });
 
       const data = await response.json();
@@ -111,17 +120,28 @@ function Dashboard({ user }) {
     e.preventDefault();
     setSkillMessage("");
 
+    if (!token) {
+      setSkillMessage("Please login again.");
+      return;
+    }
+
     try {
-      const response = await fetch("http://localhost:5000/api/profile/skills", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          skills: mySkills.split(",").map(s => s.trim()).filter(Boolean)
-        })
-      });
+      const response = await fetch(
+        `${API_URL}/api/profile/skills`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            skills: mySkills
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean),
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -142,13 +162,18 @@ function Dashboard({ user }) {
     setSelectedMatches([]);
     setMatchMessage("");
 
+    if (!token) {
+      setMatchMessage("Please login again.");
+      return;
+    }
+
     try {
       const response = await fetch(
-        `http://localhost:5000/api/ideas/${ideaId}/matches`,
+        `${API_URL}/api/ideas/${ideaId}/matches`,
         {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
@@ -161,7 +186,9 @@ function Dashboard({ user }) {
       setSelectedMatches(data.matches || []);
 
       if (!data.matches || data.matches.length === 0) {
-        setMatchMessage(data.message || "No matching founders found yet.");
+        setMatchMessage(
+          data.message || "No matching founders found yet."
+        );
       }
     } catch (err) {
       setMatchMessage(err.message);
@@ -182,7 +209,6 @@ function Dashboard({ user }) {
   return (
     <div className="dashboard-container">
       <div className="dashboard-card">
-
         <h1>Welcome, {user?.name}!</h1>
         <p>Explore ideas and find your next collaboration.</p>
 
@@ -194,7 +220,7 @@ function Dashboard({ user }) {
             <label>Startup Idea Title</label>
             <input
               value={title}
-              onChange={e => setTitle(e.target.value)}
+              onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter your startup idea title"
               required
             />
@@ -202,7 +228,7 @@ function Dashboard({ user }) {
             <label>Description</label>
             <textarea
               value={description}
-              onChange={e => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe your startup idea..."
               required
             />
@@ -210,14 +236,14 @@ function Dashboard({ user }) {
             <label>Required Skills</label>
             <input
               value={requiredSkills}
-              onChange={e => setRequiredSkills(e.target.value)}
+              onChange={(e) => setRequiredSkills(e.target.value)}
               placeholder="Python, React, UI/UX"
             />
 
             <label>Team Roles Required</label>
             <input
               value={teamRoles}
-              onChange={e => setTeamRoles(e.target.value)}
+              onChange={(e) => setTeamRoles(e.target.value)}
               placeholder="Frontend Developer, Designer, Marketing"
             />
 
@@ -238,7 +264,7 @@ function Dashboard({ user }) {
             <label>Enter Your Skills</label>
             <input
               value={mySkills}
-              onChange={e => setMySkills(e.target.value)}
+              onChange={(e) => setMySkills(e.target.value)}
               placeholder="Python, React, Java, UI/UX"
               required
             />
@@ -248,7 +274,9 @@ function Dashboard({ user }) {
             </button>
           </form>
 
-          {skillMessage && <p className="auth-message">{skillMessage}</p>}
+          {skillMessage && (
+            <p className="auth-message">{skillMessage}</p>
+          )}
         </div>
 
         {/* FIND TEAMMATES */}
@@ -258,25 +286,28 @@ function Dashboard({ user }) {
 
           <div className="idea-grid">
             {users
-              .filter(person => person.id !== user?.id)
-              .map(person => (
+              .filter((person) => person.id !== user?.id)
+              .map((person) => (
                 <div className="idea-card" key={person.id}>
                   <h3>{person.name}</h3>
                   <p>{person.email}</p>
                   <h4>Skills</h4>
 
                   <div className="idea-skills">
-                    {person.skills?.length > 0
-                      ? person.skills.map((skill, index) => (
-                          <span key={index}>{skill}</span>
-                        ))
-                      : <p>Skills not added yet.</p>}
+                    {person.skills?.length > 0 ? (
+                      person.skills.map((skill, index) => (
+                        <span key={index}>{skill}</span>
+                      ))
+                    ) : (
+                      <p>Skills not added yet.</p>
+                    )}
                   </div>
                 </div>
               ))}
           </div>
 
-          {users.filter(person => person.id !== user?.id).length === 0 && (
+          {users.filter((person) => person.id !== user?.id)
+            .length === 0 && (
             <p>No other students have registered yet.</p>
           )}
         </div>
@@ -292,9 +323,8 @@ function Dashboard({ user }) {
         )}
 
         <div className="idea-grid">
-          {ideas.map(idea => (
+          {ideas.map((idea) => (
             <div className="idea-card" key={idea.id}>
-
               <h3>{idea.title}</h3>
               <p>{idea.description}</p>
 
@@ -336,16 +366,18 @@ function Dashboard({ user }) {
 
                   {matchMessage && <p>{matchMessage}</p>}
 
-                  {selectedMatches.map(person => (
+                  {selectedMatches.map((person) => (
                     <div className="idea-card" key={person.id}>
                       <h3>{person.name}</h3>
                       <p>{person.email}</p>
 
                       <h4>Matching Skills</h4>
                       <div className="idea-skills">
-                        {person.matchedSkills.map((skill, index) => (
-                          <span key={index}>{skill}</span>
-                        ))}
+                        {person.matchedSkills?.map(
+                          (skill, index) => (
+                            <span key={index}>{skill}</span>
+                          )
+                        )}
                       </div>
 
                       <h4>Match Percentage</h4>
@@ -357,7 +389,6 @@ function Dashboard({ user }) {
             </div>
           ))}
         </div>
-
       </div>
     </div>
   );
